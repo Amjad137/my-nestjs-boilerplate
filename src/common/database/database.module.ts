@@ -12,7 +12,7 @@ import { DatabaseService } from '@common/database/services/database.service';
             {
                 name: UserEntity.name,
                 schema: UserSchema,
-            }
+            },
         ]),
     ],
     providers: [DatabaseService],

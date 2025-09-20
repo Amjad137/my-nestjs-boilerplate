@@ -1,1 +1,1124 @@
-{"openapi":"3.0.0","paths":{"/api/v1/auth/login":{"post":{"operationId":"AuthController_login_v1","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/LoginDto"}}}},"responses":{"200":{"description":"User logged in successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/AuthResponseDto"}}}}},"summary":"User login","tags":["Auth"]}},"/api/v1/auth/register":{"post":{"operationId":"AuthController_register_v1","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/RegisterDto"}}}},"responses":{"201":{"description":"User registered successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/AuthResponseDto"}}}}},"summary":"User register","tags":["Auth"]}},"/api/v1/auth/refresh":{"post":{"operationId":"AuthController_refresh_v1","parameters":[],"responses":{"200":{"description":"User refresh token successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/AuthResponseDto"}}}}},"summary":"User refresh token","tags":["Auth"]}},"/api/v1/auth/me":{"get":{"operationId":"AuthController_getProfile_v1","parameters":[],"responses":{"200":{"description":"User profile retrieved successfully"}},"security":[{"bearer":[]}],"summary":"Get current user profile","tags":["Auth"]}},"/api/v1/auth/logout":{"post":{"operationId":"AuthController_logout_v1","parameters":[],"responses":{"200":{"description":"Logout successful"}},"security":[{"bearer":[]}],"summary":"User logout","tags":["Auth"]}},"/api/v1/auth/change-password":{"post":{"operationId":"AuthController_changePassword_v1","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ChangePasswordDto"}}}},"responses":{"200":{"description":"Password changed successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/PasswordResetResponseDto"}}}},"401":{"description":"Current password is incorrect"}},"security":[{"bearer":[]}],"summary":"Change user password","tags":["Auth"]}},"/api/v1/auth/forgot-password":{"post":{"operationId":"AuthController_forgotPassword_v1","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ForgotPasswordDto"}}}},"responses":{"200":{"description":"Password reset request processed","content":{"application/json":{"schema":{"type":"object","properties":{"message":{"type":"string","example":"If the email exists, a password reset link has been sent"},"resetUrl":{"type":"string","example":"(Dev mode only) http://localhost:3000/reset-password?token=1234567890"}}}}}}},"summary":"Request password reset","tags":["Auth"]}},"/api/v1/auth/reset-password":{"post":{"operationId":"AuthController_resetPassword_v1","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ResetPasswordDto"}}}},"responses":{"200":{"description":"Password reset successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/PasswordResetResponseDto"}}}},"401":{"description":"Invalid or expired reset token"}},"summary":"Reset password with token","tags":["Auth"]}},"/api/v1/users/me":{"patch":{"operationId":"UserController_updateProfile_v1","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpdateUserDto"}}}},"responses":{"200":{"description":"Profile updated successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/UserResponseDto"}}}}},"security":[{"bearer":[]}],"summary":"Update current user profile","tags":["Users"]}},"/api/v1/users/me/change-password":{"patch":{"operationId":"UserController_changeMyPassword_v1","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ChangePasswordDto"}}}},"responses":{"204":{"description":"Password changed successfully"},"400":{"description":"Current password is incorrect"}},"security":[{"bearer":[]}],"summary":"Change current user password","tags":["Users"]}},"/api/v1/users":{"post":{"operationId":"UserController_create_v1","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/CreateUserDto"}}}},"responses":{"201":{"description":"User created successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/UserResponseDto"}}}},"409":{"description":"User with this email already exists"}},"security":[{"bearer":[]}],"summary":"Create a new user (admin only)","tags":["Users"]}},"/api/v1/users/admin/all":{"get":{"operationId":"UserController_findAllAdmin_v1","parameters":[{"name":"page","required":false,"in":"query","description":"Page number","schema":{"minimum":1,"default":1,"example":1,"type":"number"}},{"name":"limit","required":false,"in":"query","description":"Number of items per page","schema":{"minimum":1,"maximum":100,"default":20,"example":20,"type":"number"}},{"name":"search_key","required":false,"in":"query","description":"Search term to filter results","schema":{"example":"john","type":"string"}},{"name":"sort_by","required":false,"in":"query","description":"Field to sort by","schema":{"example":"createdAt","type":"string"}},{"name":"sort_order","required":false,"in":"query","description":"Sort order","schema":{"default":"desc","example":"desc","type":"string","enum":["asc","desc"]}}],"responses":{"200":{"description":"Users retrieved successfully","content":{"application/json":{"schema":{"type":"object","properties":{"data":{"type":"array","items":{"$ref":"#/components/schemas/UserResponseDto"}},"pagination":{"type":"object","properties":{"page":{"type":"number"},"limit":{"type":"number"},"total":{"type":"number"},"totalPages":{"type":"number"},"hasNext":{"type":"boolean"},"hasPrev":{"type":"boolean"}}}}}}}}},"security":[{"bearer":[]}],"summary":"Get all users with pagination (admin only)","tags":["Users"]}},"/api/v1/users/admin/{id}":{"get":{"operationId":"UserController_findOneAdmin_v1","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"User retrieved successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/UserResponseDto"}}}},"404":{"description":"User not found"}},"security":[{"bearer":[]}],"summary":"Get user by ID (admin only)","tags":["Users"]},"patch":{"operationId":"UserController_updateAdmin_v1","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpdateUserDto"}}}},"responses":{"200":{"description":"User updated successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/UserResponseDto"}}}},"404":{"description":"User not found"}},"security":[{"bearer":[]}],"summary":"Update any user (admin only)","tags":["Users"]},"delete":{"operationId":"UserController_removeAdmin_v1","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"204":{"description":"User deleted successfully"},"404":{"description":"User not found"}},"security":[{"bearer":[]}],"summary":"Delete user (admin only)","tags":["Users"]}},"/api/v1/health":{"get":{"operationId":"HealthController_check_v1","parameters":[],"responses":{"200":{"description":"The Health Check is successful","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"string","example":"ok"},"info":{"type":"object","example":{"database":{"status":"up"}},"additionalProperties":{"type":"object","required":["status"],"properties":{"status":{"type":"string"}},"additionalProperties":true},"nullable":true},"error":{"type":"object","example":{},"additionalProperties":{"type":"object","required":["status"],"properties":{"status":{"type":"string"}},"additionalProperties":true},"nullable":true},"details":{"type":"object","example":{"database":{"status":"up"}},"additionalProperties":{"type":"object","required":["status"],"properties":{"status":{"type":"string"}},"additionalProperties":true}}}}}}},"503":{"description":"The Health Check is not successful","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"string","example":"error"},"info":{"type":"object","example":{"database":{"status":"up"}},"additionalProperties":{"type":"object","required":["status"],"properties":{"status":{"type":"string"}},"additionalProperties":true},"nullable":true},"error":{"type":"object","example":{"redis":{"status":"down","message":"Could not connect"}},"additionalProperties":{"type":"object","required":["status"],"properties":{"status":{"type":"string"}},"additionalProperties":true},"nullable":true},"details":{"type":"object","example":{"database":{"status":"up"},"redis":{"status":"down","message":"Could not connect"}},"additionalProperties":{"type":"object","required":["status"],"properties":{"status":{"type":"string"}},"additionalProperties":true}}}}}}}},"summary":"Health check","tags":["Health"]}},"/api/v1/s3/public-upload":{"post":{"description":"Generate presigned URLs for uploading public images (profile pictures, post images)","operationId":"S3Controller_getPublicUploadUrls_v1","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/PresignedUrlRequestDto"}}}},"responses":{"201":{"description":"Presigned URLs generated successfully","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/PublicUploadResponseDto"}}}}},"400":{"description":"Invalid request data"}},"security":[{"bearer":[]}],"summary":"Get presigned URLs for public image uploads","tags":["S3"]}},"/api/v1/s3/protected-upload":{"post":{"description":"Generate presigned URLs for uploading secure/private files","operationId":"S3Controller_getSecureUploadUrls_v1","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/PresignedUrlRequestDto"}}}},"responses":{"201":{"description":"Presigned URLs generated successfully","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/PresignedUrlResponseDto"}}}}},"400":{"description":"Invalid request data"},"401":{"description":"Unauthorized"}},"security":[{"bearer":[]}],"summary":"Get presigned URLs for secure file uploads","tags":["S3"]}},"/api/v1/s3/files":{"delete":{"description":"Delete multiple files from S3 bucket using their keys","operationId":"S3Controller_deleteFiles_v1","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/DeleteFilesRequestDto"}}}},"responses":{"204":{"description":"Files deleted successfully"},"400":{"description":"Invalid request data"},"401":{"description":"Unauthorized"}},"security":[{"bearer":[]}],"summary":"Delete files from S3","tags":["S3"]}},"/api/v1/s3/file-url/{key}":{"get":{"description":"Get the public URL for a file stored in S3","operationId":"S3Controller_getFileUrl_v1","parameters":[{"name":"key","required":true,"in":"path","schema":{"type":"string"}},{"name":"secure","required":true,"in":"query","schema":{"type":"boolean"}}],"responses":{"200":{"description":"File URL retrieved successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/FileUrlResponseDto"}}}},"401":{"description":"Unauthorized"},"404":{"description":"File not found"}},"security":[{"bearer":[]}],"summary":"Get file URL","tags":["S3"]}}},"info":{"title":"APIs Specification","description":"APIs documentation","version":"1.0.0","contact":{}},"tags":[{"name":"Auth","description":"Authentication endpoints"},{"name":"Users","description":"User management endpoints"},{"name":"Health","description":"Health check endpoints"}],"servers":[{"url":"/"}],"components":{"securitySchemes":{"bearer":{"scheme":"bearer","bearerFormat":"JWT","type":"http"},"refreshToken":{"scheme":"bearer","bearerFormat":"JWT","type":"http"}},"schemas":{"LoginDto":{"type":"object","properties":{"email":{"type":"string","example":"john@example.com"},"password":{"type":"string","example":"Test@123"}},"required":["email","password"]},"UserResponseDto":{"type":"object","properties":{"email":{"type":"string","example":"john@example.com"},"phoneNumber":{"type":"string","example":"+1234567890"},"firstName":{"type":"string","example":"John"},"lastName":{"type":"string","example":"Doe"},"address":{"type":"string","example":"123 Main St, City, Country"},"role":{"type":"string","example":"user","enum":["user","admin"]},"avatar":{"type":"string","example":"https://example.com/avatar.jpg"},"isActive":{"type":"boolean","example":true},"isEmailVerified":{"type":"boolean","example":false},"lastLoginAt":{"format":"date-time","type":"string","example":"2024-01-01T00:00:00.000Z"}},"required":["email","phoneNumber","firstName","lastName","address","role","isActive","isEmailVerified"]},"AuthResponseDto":{"type":"object","properties":{"accessToken":{"type":"string","example":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."},"user":{"example":{"_id":"507f1f77bcf86cd799439011","firstName":"John","lastName":"Doe","email":"john@example.com","phoneNumber":"+1234567890","address":"123 Main St, City, Country","role":"user","isActive":true,"isEmailVerified":false,"createdAt":"2024-01-01T00:00:00.000Z","updatedAt":"2024-01-01T00:00:00.000Z"},"allOf":[{"$ref":"#/components/schemas/UserResponseDto"}]}},"required":["accessToken","user"]},"RegisterDto":{"type":"object","properties":{"firstName":{"type":"string","example":"John"},"lastName":{"type":"string","example":"Doe"},"email":{"type":"string","example":"john@example.com"},"phoneNumber":{"type":"string","example":"+1234567890"},"address":{"type":"string","example":"123 Main St, City, Country"},"avatar":{"type":"string","example":"https://example.com/avatar.jpg"},"password":{"type":"string","example":"Test@123","minLength":6}},"required":["firstName","lastName","email","phoneNumber","address","password"]},"ChangePasswordDto":{"type":"object","properties":{"currentPassword":{"type":"string","example":"oldTest@123","description":"Current password"},"newPassword":{"type":"string","example":"Test@123","description":"New password (minimum 8 characters)","minLength":8}},"required":["currentPassword","newPassword"]},"PasswordResetResponseDto":{"type":"object","properties":{"message":{"type":"string","example":"Password changed successfully","description":"Success message"},"timestamp":{"type":"string","example":"2024-01-15T10:30:00.000Z","description":"Timestamp when password was changed"}},"required":["message","timestamp"]},"ForgotPasswordDto":{"type":"object","properties":{"email":{"type":"string","example":"user@example.com","description":"User email address"}},"required":["email"]},"ResetPasswordDto":{"type":"object","properties":{"token":{"type":"string","example":"abc123def456","description":"Password reset token"},"newPassword":{"type":"string","example":"Test@123","description":"New password (minimum 8 characters)","minLength":8}},"required":["token","newPassword"]},"UpdateUserDto":{"type":"object","properties":{"passwordResetToken":{"type":"string","example":"abc123def456"},"passwordResetExpires":{"format":"date-time","type":"string","example":"2024-01-15T10:30:00.000Z"},"emailVerificationToken":{"type":"string","example":"xyz789"},"salt":{"type":"string","example":"salt123"}}},"CreateUserDto":{"type":"object","properties":{"firstName":{"type":"string","example":"John"},"lastName":{"type":"string","example":"Doe"},"email":{"type":"string","example":"john@example.com"},"phoneNumber":{"type":"string","example":"+1234567890"},"address":{"type":"string","example":"123 Main St, City, Country"},"avatar":{"type":"string","example":"https://example.com/avatar.jpg"},"password":{"type":"string","example":"Test@123","minLength":6},"role":{"type":"string","example":"user","enum":["user","admin"],"description":"User role (admin can only be set by existing admin)","default":"user"}},"required":["firstName","lastName","email","phoneNumber","address","password"]},"PresignedUrlRequestDto":{"type":"object","properties":{"fileType":{"type":"string","description":"File type/MIME type","example":"image/jpeg"},"folder":{"type":"string","description":"Folder path in S3 bucket","example":"profile-pictures"},"keyCount":{"type":"number","description":"Number of keys to generate","example":1,"minimum":1,"maximum":10},"oldKeys":{"description":"Old keys to delete (for replacement)","example":["old-image-key.jpg"],"type":"array","items":{"type":"string"}}},"required":["fileType","folder","keyCount"]},"PublicUploadResponseDto":{"type":"object","properties":{"key":{"type":"string","description":"S3 object key","example":"profile-pictures/user-123-abc.jpg"},"presignedUrl":{"type":"string","description":"Presigned URL for upload","example":"https://bucket.s3.region.amazonaws.com/key?signature=..."},"publicUrl":{"type":"string","description":"Public URL to access the uploaded file","example":"https://bucket.s3.region.amazonaws.com/profile-pictures/user-123-abc.jpg"}},"required":["key","presignedUrl","publicUrl"]},"PresignedUrlResponseDto":{"type":"object","properties":{"key":{"type":"string","description":"S3 object key","example":"profile-pictures/user-123-abc.jpg"},"presignedUrl":{"type":"string","description":"Presigned URL for upload","example":"https://bucket.s3.region.amazonaws.com/key?signature=..."}},"required":["key","presignedUrl"]},"DeleteFilesRequestDto":{"type":"object","properties":{"keys":{"description":"Array of S3 keys to delete","example":["profile-pictures/user-123-abc.jpg","posts/post-456-def.jpg"],"type":"array","items":{"type":"string"}}},"required":["keys"]},"FileUrlResponseDto":{"type":"object","properties":{"url":{"type":"string","description":"File URL","example":"https://bucket.s3.region.amazonaws.com/profile-pictures/user-123-abc.jpg"}}}}}}
+{
+    "openapi": "3.0.0",
+    "paths": {
+        "/api/v1/auth/login": {
+            "post": {
+                "operationId": "AuthController_login_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User logged in successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "summary": "User login",
+                "tags": ["Auth"]
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "operationId": "AuthController_register_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "summary": "User register",
+                "tags": ["Auth"]
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "operationId": "AuthController_refresh_v1",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "User refresh token successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "summary": "User refresh token",
+                "tags": ["Auth"]
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "operationId": "AuthController_getProfile_v1",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "User profile retrieved successfully"
+                    }
+                },
+                "security": [{ "bearer": [] }],
+                "summary": "Get current user profile",
+                "tags": ["Auth"]
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "operationId": "AuthController_logout_v1",
+                "parameters": [],
+                "responses": { "200": { "description": "Logout successful" } },
+                "security": [{ "bearer": [] }],
+                "summary": "User logout",
+                "tags": ["Auth"]
+            }
+        },
+        "/api/v1/auth/change-password": {
+            "post": {
+                "operationId": "AuthController_changePassword_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password changed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PasswordResetResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": { "description": "Current password is incorrect" }
+                },
+                "security": [{ "bearer": [] }],
+                "summary": "Change user password",
+                "tags": ["Auth"]
+            }
+        },
+        "/api/v1/auth/forgot-password": {
+            "post": {
+                "operationId": "AuthController_forgotPassword_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ForgotPasswordDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset request processed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "If the email exists, a password reset link has been sent"
+                                        },
+                                        "resetUrl": {
+                                            "type": "string",
+                                            "example": "(Dev mode only) http://localhost:3000/reset-password?token=1234567890"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "summary": "Request password reset",
+                "tags": ["Auth"]
+            }
+        },
+        "/api/v1/auth/reset-password": {
+            "post": {
+                "operationId": "AuthController_resetPassword_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResetPasswordDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PasswordResetResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": { "description": "Invalid or expired reset token" }
+                },
+                "summary": "Reset password with token",
+                "tags": ["Auth"]
+            }
+        },
+        "/api/v1/users/me": {
+            "patch": {
+                "operationId": "UserController_updateProfile_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateUserDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "bearer": [] }],
+                "summary": "Update current user profile",
+                "tags": ["Users"]
+            }
+        },
+        "/api/v1/users/me/change-password": {
+            "patch": {
+                "operationId": "UserController_changeMyPassword_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": { "description": "Password changed successfully" },
+                    "400": { "description": "Current password is incorrect" }
+                },
+                "security": [{ "bearer": [] }],
+                "summary": "Change current user password",
+                "tags": ["Users"]
+            }
+        },
+        "/api/v1/users": {
+            "post": {
+                "operationId": "UserController_create_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUserDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "User with this email already exists"
+                    }
+                },
+                "security": [{ "bearer": [] }],
+                "summary": "Create a new user (admin only)",
+                "tags": ["Users"]
+            }
+        },
+        "/api/v1/users/admin/all": {
+            "get": {
+                "operationId": "UserController_findAllAdmin_v1",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "minimum": 1,
+                            "default": 1,
+                            "example": 1,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "schema": {
+                            "minimum": 1,
+                            "maximum": 100,
+                            "default": 20,
+                            "example": 20,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "search_key",
+                        "required": false,
+                        "in": "query",
+                        "description": "Search term to filter results",
+                        "schema": { "example": "john", "type": "string" }
+                    },
+                    {
+                        "name": "sort_by",
+                        "required": false,
+                        "in": "query",
+                        "description": "Field to sort by",
+                        "schema": { "example": "createdAt", "type": "string" }
+                    },
+                    {
+                        "name": "sort_order",
+                        "required": false,
+                        "in": "query",
+                        "description": "Sort order",
+                        "schema": {
+                            "default": "desc",
+                            "example": "desc",
+                            "type": "string",
+                            "enum": ["asc", "desc"]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Users retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/UserResponseDto"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page": { "type": "number" },
+                                                "limit": { "type": "number" },
+                                                "total": { "type": "number" },
+                                                "totalPages": {
+                                                    "type": "number"
+                                                },
+                                                "hasNext": {
+                                                    "type": "boolean"
+                                                },
+                                                "hasPrev": { "type": "boolean" }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "bearer": [] }],
+                "summary": "Get all users with pagination (admin only)",
+                "tags": ["Users"]
+            }
+        },
+        "/api/v1/users/admin/{id}": {
+            "get": {
+                "operationId": "UserController_findOneAdmin_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": { "type": "string" }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "404": { "description": "User not found" }
+                },
+                "security": [{ "bearer": [] }],
+                "summary": "Get user by ID (admin only)",
+                "tags": ["Users"]
+            },
+            "patch": {
+                "operationId": "UserController_updateAdmin_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": { "type": "string" }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateUserDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "404": { "description": "User not found" }
+                },
+                "security": [{ "bearer": [] }],
+                "summary": "Update any user (admin only)",
+                "tags": ["Users"]
+            },
+            "delete": {
+                "operationId": "UserController_removeAdmin_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": { "type": "string" }
+                    }
+                ],
+                "responses": {
+                    "204": { "description": "User deleted successfully" },
+                    "404": { "description": "User not found" }
+                },
+                "security": [{ "bearer": [] }],
+                "summary": "Delete user (admin only)",
+                "tags": ["Users"]
+            }
+        },
+        "/api/v1/health": {
+            "get": {
+                "operationId": "HealthController_check_v1",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "The Health Check is successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "ok"
+                                        },
+                                        "info": {
+                                            "type": "object",
+                                            "example": {
+                                                "database": { "status": "up" }
+                                            },
+                                            "additionalProperties": {
+                                                "type": "object",
+                                                "required": ["status"],
+                                                "properties": {
+                                                    "status": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "additionalProperties": true
+                                            },
+                                            "nullable": true
+                                        },
+                                        "error": {
+                                            "type": "object",
+                                            "example": {},
+                                            "additionalProperties": {
+                                                "type": "object",
+                                                "required": ["status"],
+                                                "properties": {
+                                                    "status": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "additionalProperties": true
+                                            },
+                                            "nullable": true
+                                        },
+                                        "details": {
+                                            "type": "object",
+                                            "example": {
+                                                "database": { "status": "up" }
+                                            },
+                                            "additionalProperties": {
+                                                "type": "object",
+                                                "required": ["status"],
+                                                "properties": {
+                                                    "status": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "additionalProperties": true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The Health Check is not successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "info": {
+                                            "type": "object",
+                                            "example": {
+                                                "database": { "status": "up" }
+                                            },
+                                            "additionalProperties": {
+                                                "type": "object",
+                                                "required": ["status"],
+                                                "properties": {
+                                                    "status": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "additionalProperties": true
+                                            },
+                                            "nullable": true
+                                        },
+                                        "error": {
+                                            "type": "object",
+                                            "example": {
+                                                "redis": {
+                                                    "status": "down",
+                                                    "message": "Could not connect"
+                                                }
+                                            },
+                                            "additionalProperties": {
+                                                "type": "object",
+                                                "required": ["status"],
+                                                "properties": {
+                                                    "status": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "additionalProperties": true
+                                            },
+                                            "nullable": true
+                                        },
+                                        "details": {
+                                            "type": "object",
+                                            "example": {
+                                                "database": { "status": "up" },
+                                                "redis": {
+                                                    "status": "down",
+                                                    "message": "Could not connect"
+                                                }
+                                            },
+                                            "additionalProperties": {
+                                                "type": "object",
+                                                "required": ["status"],
+                                                "properties": {
+                                                    "status": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "additionalProperties": true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "summary": "Health check",
+                "tags": ["Health"]
+            }
+        },
+        "/api/v1/s3/public-upload": {
+            "post": {
+                "description": "Generate presigned URLs for uploading public images (profile pictures, post images)",
+                "operationId": "S3Controller_getPublicUploadUrls_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PresignedUrlRequestDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Presigned URLs generated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/PublicUploadResponseDto"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": { "description": "Invalid request data" }
+                },
+                "security": [{ "bearer": [] }],
+                "summary": "Get presigned URLs for public image uploads",
+                "tags": ["S3"]
+            }
+        },
+        "/api/v1/s3/protected-upload": {
+            "post": {
+                "description": "Generate presigned URLs for uploading secure/private files",
+                "operationId": "S3Controller_getSecureUploadUrls_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PresignedUrlRequestDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Presigned URLs generated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/PresignedUrlResponseDto"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": { "description": "Invalid request data" },
+                    "401": { "description": "Unauthorized" }
+                },
+                "security": [{ "bearer": [] }],
+                "summary": "Get presigned URLs for secure file uploads",
+                "tags": ["S3"]
+            }
+        },
+        "/api/v1/s3/files": {
+            "delete": {
+                "description": "Delete multiple files from S3 bucket using their keys",
+                "operationId": "S3Controller_deleteFiles_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeleteFilesRequestDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": { "description": "Files deleted successfully" },
+                    "400": { "description": "Invalid request data" },
+                    "401": { "description": "Unauthorized" }
+                },
+                "security": [{ "bearer": [] }],
+                "summary": "Delete files from S3",
+                "tags": ["S3"]
+            }
+        },
+        "/api/v1/s3/file-url/{key}": {
+            "get": {
+                "description": "Get the public URL for a file stored in S3",
+                "operationId": "S3Controller_getFileUrl_v1",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "required": true,
+                        "in": "path",
+                        "schema": { "type": "string" }
+                    },
+                    {
+                        "name": "secure",
+                        "required": true,
+                        "in": "query",
+                        "schema": { "type": "boolean" }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File URL retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FileUrlResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": { "description": "Unauthorized" },
+                    "404": { "description": "File not found" }
+                },
+                "security": [{ "bearer": [] }],
+                "summary": "Get file URL",
+                "tags": ["S3"]
+            }
+        }
+    },
+    "info": {
+        "title": "APIs Specification",
+        "description": "APIs documentation",
+        "version": "1.0.0",
+        "contact": {}
+    },
+    "tags": [
+        { "name": "Auth", "description": "Authentication endpoints" },
+        { "name": "Users", "description": "User management endpoints" },
+        { "name": "Health", "description": "Health check endpoints" }
+    ],
+    "servers": [{ "url": "/" }],
+    "components": {
+        "securitySchemes": {
+            "bearer": {
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "type": "http"
+            },
+            "refreshToken": {
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "type": "http"
+            }
+        },
+        "schemas": {
+            "LoginDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "example": "john@example.com"
+                    },
+                    "password": { "type": "string", "example": "Test@123" }
+                },
+                "required": ["email", "password"]
+            },
+            "UserResponseDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "example": "john@example.com"
+                    },
+                    "phoneNumber": {
+                        "type": "string",
+                        "example": "+1234567890"
+                    },
+                    "firstName": { "type": "string", "example": "John" },
+                    "lastName": { "type": "string", "example": "Doe" },
+                    "address": {
+                        "type": "string",
+                        "example": "123 Main St, City, Country"
+                    },
+                    "role": {
+                        "type": "string",
+                        "example": "user",
+                        "enum": ["user", "admin"]
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "example": "https://example.com/avatar.jpg"
+                    },
+                    "isActive": { "type": "boolean", "example": true },
+                    "isEmailVerified": { "type": "boolean", "example": false },
+                    "lastLoginAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2024-01-01T00:00:00.000Z"
+                    }
+                },
+                "required": [
+                    "email",
+                    "phoneNumber",
+                    "firstName",
+                    "lastName",
+                    "address",
+                    "role",
+                    "isActive",
+                    "isEmailVerified"
+                ]
+            },
+            "AuthResponseDto": {
+                "type": "object",
+                "properties": {
+                    "accessToken": {
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "user": {
+                        "example": {
+                            "_id": "507f1f77bcf86cd799439011",
+                            "firstName": "John",
+                            "lastName": "Doe",
+                            "email": "john@example.com",
+                            "phoneNumber": "+1234567890",
+                            "address": "123 Main St, City, Country",
+                            "role": "user",
+                            "isActive": true,
+                            "isEmailVerified": false,
+                            "createdAt": "2024-01-01T00:00:00.000Z",
+                            "updatedAt": "2024-01-01T00:00:00.000Z"
+                        },
+                        "allOf": [
+                            { "$ref": "#/components/schemas/UserResponseDto" }
+                        ]
+                    }
+                },
+                "required": ["accessToken", "user"]
+            },
+            "RegisterDto": {
+                "type": "object",
+                "properties": {
+                    "firstName": { "type": "string", "example": "John" },
+                    "lastName": { "type": "string", "example": "Doe" },
+                    "email": {
+                        "type": "string",
+                        "example": "john@example.com"
+                    },
+                    "phoneNumber": {
+                        "type": "string",
+                        "example": "+1234567890"
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "123 Main St, City, Country"
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "example": "https://example.com/avatar.jpg"
+                    },
+                    "password": {
+                        "type": "string",
+                        "example": "Test@123",
+                        "minLength": 6
+                    }
+                },
+                "required": [
+                    "firstName",
+                    "lastName",
+                    "email",
+                    "phoneNumber",
+                    "address",
+                    "password"
+                ]
+            },
+            "ChangePasswordDto": {
+                "type": "object",
+                "properties": {
+                    "currentPassword": {
+                        "type": "string",
+                        "example": "oldTest@123",
+                        "description": "Current password"
+                    },
+                    "newPassword": {
+                        "type": "string",
+                        "example": "Test@123",
+                        "description": "New password (minimum 8 characters)",
+                        "minLength": 8
+                    }
+                },
+                "required": ["currentPassword", "newPassword"]
+            },
+            "PasswordResetResponseDto": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Password changed successfully",
+                        "description": "Success message"
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "example": "2024-01-15T10:30:00.000Z",
+                        "description": "Timestamp when password was changed"
+                    }
+                },
+                "required": ["message", "timestamp"]
+            },
+            "ForgotPasswordDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "example": "user@example.com",
+                        "description": "User email address"
+                    }
+                },
+                "required": ["email"]
+            },
+            "ResetPasswordDto": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "example": "abc123def456",
+                        "description": "Password reset token"
+                    },
+                    "newPassword": {
+                        "type": "string",
+                        "example": "Test@123",
+                        "description": "New password (minimum 8 characters)",
+                        "minLength": 8
+                    }
+                },
+                "required": ["token", "newPassword"]
+            },
+            "UpdateUserDto": {
+                "type": "object",
+                "properties": {
+                    "passwordResetToken": {
+                        "type": "string",
+                        "example": "abc123def456"
+                    },
+                    "passwordResetExpires": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2024-01-15T10:30:00.000Z"
+                    },
+                    "emailVerificationToken": {
+                        "type": "string",
+                        "example": "xyz789"
+                    },
+                    "salt": { "type": "string", "example": "salt123" }
+                }
+            },
+            "CreateUserDto": {
+                "type": "object",
+                "properties": {
+                    "firstName": { "type": "string", "example": "John" },
+                    "lastName": { "type": "string", "example": "Doe" },
+                    "email": {
+                        "type": "string",
+                        "example": "john@example.com"
+                    },
+                    "phoneNumber": {
+                        "type": "string",
+                        "example": "+1234567890"
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "123 Main St, City, Country"
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "example": "https://example.com/avatar.jpg"
+                    },
+                    "password": {
+                        "type": "string",
+                        "example": "Test@123",
+                        "minLength": 6
+                    },
+                    "role": {
+                        "type": "string",
+                        "example": "user",
+                        "enum": ["user", "admin"],
+                        "description": "User role (admin can only be set by existing admin)",
+                        "default": "user"
+                    }
+                },
+                "required": [
+                    "firstName",
+                    "lastName",
+                    "email",
+                    "phoneNumber",
+                    "address",
+                    "password"
+                ]
+            },
+            "PresignedUrlRequestDto": {
+                "type": "object",
+                "properties": {
+                    "fileType": {
+                        "type": "string",
+                        "description": "File type/MIME type",
+                        "example": "image/jpeg"
+                    },
+                    "folder": {
+                        "type": "string",
+                        "description": "Folder path in S3 bucket",
+                        "example": "profile-pictures"
+                    },
+                    "keyCount": {
+                        "type": "number",
+                        "description": "Number of keys to generate",
+                        "example": 1,
+                        "minimum": 1,
+                        "maximum": 10
+                    },
+                    "oldKeys": {
+                        "description": "Old keys to delete (for replacement)",
+                        "example": ["old-image-key.jpg"],
+                        "type": "array",
+                        "items": { "type": "string" }
+                    }
+                },
+                "required": ["fileType", "folder", "keyCount"]
+            },
+            "PublicUploadResponseDto": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "description": "S3 object key",
+                        "example": "profile-pictures/user-123-abc.jpg"
+                    },
+                    "presignedUrl": {
+                        "type": "string",
+                        "description": "Presigned URL for upload",
+                        "example": "https://bucket.s3.region.amazonaws.com/key?signature=..."
+                    },
+                    "publicUrl": {
+                        "type": "string",
+                        "description": "Public URL to access the uploaded file",
+                        "example": "https://bucket.s3.region.amazonaws.com/profile-pictures/user-123-abc.jpg"
+                    }
+                },
+                "required": ["key", "presignedUrl", "publicUrl"]
+            },
+            "PresignedUrlResponseDto": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "description": "S3 object key",
+                        "example": "profile-pictures/user-123-abc.jpg"
+                    },
+                    "presignedUrl": {
+                        "type": "string",
+                        "description": "Presigned URL for upload",
+                        "example": "https://bucket.s3.region.amazonaws.com/key?signature=..."
+                    }
+                },
+                "required": ["key", "presignedUrl"]
+            },
+            "DeleteFilesRequestDto": {
+                "type": "object",
+                "properties": {
+                    "keys": {
+                        "description": "Array of S3 keys to delete",
+                        "example": [
+                            "profile-pictures/user-123-abc.jpg",
+                            "posts/post-456-def.jpg"
+                        ],
+                        "type": "array",
+                        "items": { "type": "string" }
+                    }
+                },
+                "required": ["keys"]
+            },
+            "FileUrlResponseDto": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": "File URL",
+                        "example": "https://bucket.s3.region.amazonaws.com/profile-pictures/user-123-abc.jpg"
+                    }
+                }
+            }
+        }
+    }
+}
