@@ -136,11 +136,6 @@ yarn build              # Build the application
 yarn start:prod         # Start production server
 yarn prebuild           # Clean dist folder before build
 
-# Environment Management
-yarn env:copy:local     # Copy .env.local to .env
-yarn env:copy:qa        # Copy .env.qa to .env
-yarn env:copy:production # Copy .env.production to .env
-
 # Testing
 yarn test               # Run unit tests with Jest
 yarn migrate:fresh      # Reset and seed database
