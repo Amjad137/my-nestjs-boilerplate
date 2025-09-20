@@ -3,9 +3,9 @@ import {
     IsNumber,
     IsOptional,
     IsString,
-    ValidateNested,
+    IsBoolean,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 
 export enum ENVIRONMENT {
     DEVELOPMENT = 'development',
@@ -13,54 +13,80 @@ export enum ENVIRONMENT {
     TEST = 'test',
 }
 
-export class AppHttpDto {
-    @IsString()
-    @IsOptional()
-    host?: string;
-
-    @IsNumber()
-    @IsOptional()
-    port?: number;
-}
-
-export class AppUrlVersionDto {
-    @IsString()
-    @IsOptional()
-    enable?: boolean;
-
-    @IsString()
-    @IsOptional()
-    prefix?: string;
-
-    @IsString()
-    @IsOptional()
-    version?: string;
-}
-
 export class AppEnvDto {
+    // Node Environment
     @IsEnum(ENVIRONMENT)
     @IsOptional()
-    env?: ENVIRONMENT;
+    NODE_ENV?: ENVIRONMENT;
+
+    // App Configuration (Required)
+    @IsString()
+    APP_HOST: string;
+
+    @Transform(({ value }) => parseInt(value))
+    @IsNumber()
+    APP_PORT: number;
+
+    // App Configuration (Optional)
+    @IsString()
+    @IsOptional()
+    APP_TZ?: string;
 
     @IsString()
     @IsOptional()
-    timezone?: string;
+    APP_GLOBAL_PREFIX?: string;
 
-    @ValidateNested()
-    @Type(() => AppHttpDto)
+    @Transform(({ value }) => value === 'true')
+    @IsBoolean()
     @IsOptional()
-    http?: AppHttpDto;
-
-    @IsString()
-    @IsOptional()
-    globalPrefix?: string;
-
-    @ValidateNested()
-    @Type(() => AppUrlVersionDto)
-    @IsOptional()
-    urlVersion?: AppUrlVersionDto;
+    APP_URL_VERSION_ENABLE?: boolean;
 
     @IsString()
     @IsOptional()
-    version?: string;
+    APP_URL_VERSION_PREFIX?: string;
+
+    @IsString()
+    @IsOptional()
+    APP_URL_VERSION?: string;
+
+    // Database Configuration
+    @IsString()
+    @IsOptional()
+    DATABASE_URL?: string;
+
+    @Transform(({ value }) => value === 'true')
+    @IsBoolean()
+    @IsOptional()
+    DATABASE_DEBUG?: boolean;
+
+    // JWT Configuration
+    @IsString()
+    @IsOptional()
+    JWT_SECRET?: string;
+
+    @IsString()
+    @IsOptional()
+    JWT_EXPIRES_IN?: string;
+
+    // AWS Configuration
+    @IsString()
+    @IsOptional()
+    AWS_ACCESS_KEY_ID?: string;
+
+    @IsString()
+    @IsOptional()
+    AWS_SECRET_ACCESS_KEY?: string;
+
+    @IsString()
+    @IsOptional()
+    AWS_REGION?: string;
+
+    @IsString()
+    @IsOptional()
+    S3_BUCKET_NAME?: string;
+
+    // Middleware Configuration
+    @IsString()
+    @IsOptional()
+    MIDDLEWARE_CORS_ORIGIN?: string;
 }
