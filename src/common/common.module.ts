@@ -22,10 +22,13 @@ import { ResponseModule } from '@common/response/response.module';
 
         // Database
         MongooseModule.forRootAsync({
-            useFactory: (configService: ConfigService) => ({
-                uri: configService.get<string>('database.url'),
-                ...configService.get('database.options'),
-            }),
+            useFactory: (configService: ConfigService) => {
+                const options = configService.get('database.options') || {};
+                return {
+                    uri: configService.get<string>('database.url'),
+                    ...options,
+                };
+            },
             inject: [ConfigService],
         }),
 

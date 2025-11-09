@@ -9,7 +9,7 @@ import {
     UserDocument,
     UserEntity,
 } from '@modules/user/repository/entities/user.entity';
-import { RootFilterQuery, Types } from 'mongoose';
+import { RootFilterQuery, Types, Document } from 'mongoose';
 import {
     CreateUserDto,
     UpdateUserDto,
@@ -59,16 +59,18 @@ export class UserService {
         const result = (await this.userRepository.findAll(
             { isActive: true },
             {
-                paginationQuery: query,
-                searchFields: ['firstName', 'lastName', 'email'],
-                availableSortFields: [
-                    'firstName',
-                    'lastName',
-                    'email',
-                    'createdAt',
-                    'updatedAt',
-                ],
-                defaultSortField: 'createdAt',
+                paginationQuery: {
+                    ...query,
+                    searchFields: ['firstName', 'lastName', 'email'],
+                    availableSortFields: [
+                        'firstName',
+                        'lastName',
+                        'email',
+                        'createdAt',
+                        'updatedAt',
+                    ],
+                    defaultSortField: 'createdAt',
+                },
             },
         )) as IPaginationResult<UserDocument>;
 
@@ -219,7 +221,8 @@ export class UserService {
         await this.userRepository.updateLastLogin(normalizedId);
     }
 
-    toResponseDto(user: UserDocument): UserResponseDto {
+    toResponseDto(user: UserDocument | UserEntity): UserResponseDto {
+        const userObj = user instanceof Document ? user.toObject() : user;
         const {
             password,
             salt,
@@ -227,7 +230,7 @@ export class UserService {
             passwordResetToken,
             passwordResetExpires,
             ...userData
-        } = user.toObject();
+        } = userObj;
         return userData as UserResponseDto;
     }
 }

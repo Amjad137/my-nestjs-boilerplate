@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import * as bcrypt from 'bcryptjs';
+import { Document } from 'mongoose';
 import { UserService } from '@modules/user/user.service';
 import { SessionService } from '@modules/session/session.service';
 import { LoginDto, AuthResponseDto } from '@modules/auth/dtos/auth.dto';
@@ -210,7 +211,8 @@ export class AuthService {
     async validateUser(email: string, password: string): Promise<any> {
         const user = await this.userService.findByEmail(email);
         if (user && (await bcrypt.compare(password, user.password))) {
-            const { password: _, ...result } = user.toObject();
+            const userObj = user instanceof Document ? user.toObject() : user;
+            const { password: _, ...result } = userObj;
             return result;
         }
         return null;

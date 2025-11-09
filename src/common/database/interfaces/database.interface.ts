@@ -28,8 +28,11 @@ export interface IPaginationQuery {
     page?: number;
     limit?: number;
     search_key?: string;
+    searchFields?: string[];
     sort_by?: string;
     sort_order?: 'asc' | 'desc';
+    availableSortFields?: string[];
+    defaultSortField?: string;
 }
 
 export interface IDatabaseQueryContainOptions {

@@ -5,6 +5,8 @@ import {
     UpdateQuery,
     Types,
     PipelineStage,
+    FilterQuery,
+    ProjectionType,
 } from 'mongoose';
 import { BaseEntity } from '@common/database/bases/base.entity';
 import {
@@ -13,23 +15,31 @@ import {
     IPaginationQuery,
 } from '@common/database/interfaces/database.interface';
 
-export interface IDatabaseFindAllOptions {
-    select?: Record<string, any>;
+export interface IDatabaseFindAllOptions<T = any> {
+    select?: ProjectionType<T>;
     paging?: {
         limit: number;
         offset: number;
     };
-    order?: Record<string, any>;
+    order?: Record<string, 1 | -1>;
     join?: boolean | PopulateOptions | (string | PopulateOptions)[];
     withDeleted?: boolean;
     session?: any;
+    searchCriteria?: { key: string; value: string }[];
+    lookup?: {
+        from: string;
+        localField: string;
+        foreignField: string;
+        as: string;
+    }[];
 }
 
-export interface IDatabaseFindOneOptions {
-    select?: Record<string, any>;
+export interface IDatabaseFindOneOptions<T = any> {
+    select?: ProjectionType<T>;
     join?: boolean | PopulateOptions | (string | PopulateOptions)[];
     withDeleted?: boolean;
     session?: any;
+    lean?: boolean;
 }
 
 export interface IDatabaseCreateOptions {
@@ -38,6 +48,7 @@ export interface IDatabaseCreateOptions {
 
 export interface IDatabaseUpdateOptions {
     session?: any;
+    returnDocument?: 'before' | 'after';
 }
 
 export interface IDatabaseSoftDeleteOptions {
@@ -46,7 +57,18 @@ export interface IDatabaseSoftDeleteOptions {
 
 export interface IDatabaseDeleteOptions {
     session?: any;
+    returnDocument?: 'before' | 'after';
 }
+
+export interface GroupedCount {
+    [key: string]: number;
+}
+
+export interface TotalCount {
+    totalCount: number;
+}
+
+export type CountResult = GroupedCount[] | TotalCount;
 
 export class BaseRepository<
     Entity extends BaseEntity,
@@ -63,15 +85,10 @@ export class BaseRepository<
         this._join = options;
     }
 
-    // Single findAll method - handles everything intelligently
     async findAll<T = EntityDocument>(
-        find?: RootFilterQuery<Entity>,
+        filter?: FilterQuery<Entity>,
         options?: IDatabaseFindAllOptions & {
-            // Pagination options
             paginationQuery?: IPaginationQuery;
-            searchFields?: string[];
-            availableSortFields?: string[];
-            defaultSortField?: string;
         },
     ): Promise<T[] | IPaginationResult<T>> {
         // Check if pagination is requested
@@ -84,63 +101,108 @@ export class BaseRepository<
                 options.paginationQuery.sort_order !== undefined);
 
         // Build base filter
-        const baseFilter: any = {
-            ...find,
+        const baseFilter: FilterQuery<Entity> = {
+            ...filter,
             ...(!options?.withDeleted && { deleted: false }),
         };
 
-        // Add search if provided
-        if (options?.paginationQuery?.search_key && options?.searchFields) {
-            baseFilter.$or = options.searchFields.map(field => ({
-                [field]: {
-                    $regex: options.paginationQuery.search_key,
-                    $options: 'i',
-                },
-            }));
+        // Handle date range filters
+        if (filter.createdAt) {
+            const { $gte, $lte } = filter.createdAt;
+            if ($gte || $lte) {
+                baseFilter.createdAt = {
+                    ...(baseFilter.createdAt as Record<string, unknown>),
+                    ...($gte && { $gte: new Date($gte) }),
+                    ...($lte && { $lt: new Date($lte) }),
+                };
+            }
         }
 
         // If no pagination, return simple results
         if (!isPaginated) {
-            let query = this._repository.find(baseFilter);
+            const query = this._repository.find(baseFilter).lean();
 
-            if (options?.select) query = query.select(options.select);
-            if (options?.order) query = query.sort(options.order);
+            if (options?.select) query.select(options.select);
+            if (options?.order) query.sort(options.order);
             if (options?.join) {
                 const populateOptions =
                     typeof options.join === 'boolean' && options.join
                         ? this._join
                         : options.join;
                 if (populateOptions && typeof populateOptions !== 'boolean') {
-                    query = query.populate(populateOptions);
+                    query.populate(populateOptions);
                 }
             }
-            if (options?.session) query = query.session(options.session);
+            if (options?.session) query.session(options.session);
 
-            return query.exec() as Promise<T[]>;
+            const result = await query.exec();
+            return (result ?? []) as T[];
         }
 
-        // Handle pagination
+        // Handle pagination with aggregation
         const { page = 1, limit = 20 } = options.paginationQuery;
         const skip = (page - 1) * limit;
 
         // Build sort
-        const sortField = options?.availableSortFields?.includes(
-            options?.paginationQuery?.sort_by || '',
-        )
-            ? options?.paginationQuery?.sort_by
-            : options?.defaultSortField || 'createdAt';
+        const sortField =
+            options?.paginationQuery?.availableSortFields?.includes(
+                options?.paginationQuery?.sort_by || '',
+            )
+                ? options?.paginationQuery?.sort_by
+                : options?.paginationQuery?.defaultSortField || 'createdAt';
         const sortOrder: 1 | -1 =
             options?.paginationQuery?.sort_order === 'asc' ? 1 : -1;
-        const sort = { [sortField]: sortOrder };
 
-        // Use simple Mongoose pagination with populate
-        const total = await this._repository.countDocuments(baseFilter);
+        // Build aggregation pipeline
+        const searchPipelines: PipelineStage[] = [];
+        const paginationPipelines: PipelineStage.FacetPipelineStage[] = [
+            { $sort: { [sortField]: sortOrder } },
+            { $skip: skip },
+            { $limit: limit },
+        ];
 
-        let query = this._repository
-            .find(baseFilter)
-            .sort(sort)
-            .skip(skip)
-            .limit(limit);
+        // Add base filter
+        searchPipelines.push({ $match: baseFilter });
+
+        // Add search criteria
+        if (
+            options?.paginationQuery?.search_key &&
+            options?.paginationQuery?.searchFields
+        ) {
+            const searchConditions = options.paginationQuery.searchFields.map(
+                field => ({
+                    [field]: {
+                        $regex: options.paginationQuery.search_key,
+                        $options: 'i',
+                    },
+                }),
+            );
+            searchPipelines.push({ $match: { $or: searchConditions } });
+        }
+
+        // Add custom search criteria
+        if (options?.searchCriteria?.length) {
+            const searchConditions = options.searchCriteria.map(criteria => ({
+                [criteria.key]: {
+                    $regex: criteria.value,
+                    $options: 'i',
+                },
+            }));
+            searchPipelines.push({ $match: { $or: searchConditions } });
+        }
+
+        // Add lookups
+        if (options?.lookup?.length) {
+            for (const lookup of options.lookup) {
+                searchPipelines.push({ $lookup: lookup });
+                searchPipelines.push({
+                    $unwind: {
+                        path: `$${lookup.as}`,
+                        preserveNullAndEmptyArrays: true,
+                    },
+                });
+            }
+        }
 
         // Add population if join is enabled
         if (options?.join) {
@@ -149,12 +211,102 @@ export class BaseRepository<
                     ? this._join
                     : options.join;
 
-            if (populateOptions && typeof populateOptions !== 'boolean') {
-                query = query.populate(populateOptions);
+            if (populateOptions && Array.isArray(populateOptions)) {
+                for (const populate of populateOptions) {
+                    // Only handle PopulateOptions objects (not strings)
+                    if (typeof populate === 'string' || !populate.model) {
+                        continue;
+                    }
+
+                    // Get the actual collection name from the model
+                    const modelName =
+                        typeof populate.model === 'string'
+                            ? populate.model
+                            : populate.model.modelName;
+                    const model = this._repository.db.model(modelName);
+                    const collectionName = model.collection.name;
+
+                    searchPipelines.push(
+                        {
+                            $lookup: {
+                                from: collectionName,
+                                localField: populate.path,
+                                foreignField: '_id',
+                                as: populate.path,
+                            },
+                        },
+                        {
+                            $unwind: {
+                                path: `$${populate.path}`,
+                                preserveNullAndEmptyArrays: true,
+                            },
+                        },
+                    );
+
+                    // Apply field selection if specified (expects array of strings)
+                    if (populate.select && Array.isArray(populate.select)) {
+                        const fieldProjection: Record<string, string> = {
+                            _id: `$${populate.path}._id`,
+                        };
+
+                        for (const field of populate.select) {
+                            fieldProjection[field] =
+                                `$${populate.path}.${field}`;
+                        }
+
+                        searchPipelines.push({
+                            $addFields: {
+                                [populate.path]: {
+                                    $cond: [
+                                        { $ne: [`$${populate.path}`, null] },
+                                        fieldProjection,
+                                        null,
+                                    ],
+                                },
+                            },
+                        });
+                    }
+                }
             }
         }
 
-        const data = await query.exec();
+        // Build final aggregation pipeline
+        const pipeline: PipelineStage[] = [
+            ...searchPipelines,
+            {
+                $facet: {
+                    results: paginationPipelines,
+                    extras: [{ $count: 'total' }],
+                },
+            },
+            {
+                $unwind: {
+                    path: '$extras',
+                    preserveNullAndEmptyArrays: true,
+                },
+            },
+            {
+                $project: {
+                    results: 1,
+                    extras: {
+                        $ifNull: ['$extras', { total: 0 }],
+                    },
+                },
+            },
+            {
+                $addFields: {
+                    extras: {
+                        total: '$extras.total',
+                        limit: limit,
+                        skip: skip,
+                    },
+                },
+            },
+        ];
+
+        const result = await this._repository.aggregate(pipeline).exec();
+        const data = result[0]?.results || [];
+        const total = result[0]?.extras?.total || 0;
 
         return {
             data: data as T[],
@@ -171,45 +323,55 @@ export class BaseRepository<
 
     // Find one document
     async findOne<T = EntityDocument>(
-        find: RootFilterQuery<Entity>,
+        filter: FilterQuery<Entity>,
         options?: IDatabaseFindOneOptions,
-    ): Promise<T> {
-        const resolvedFind = await Promise.resolve(find || {});
-        const finalFind = {
-            ...resolvedFind,
+    ): Promise<T | undefined> {
+        const finalFilter: FilterQuery<Entity> = {
+            ...(filter || {}),
             ...(!options?.withDeleted && {
                 deleted: false,
             }),
         };
-        const repository = this._repository.findOne<T>(finalFind);
+
+        const query = this._repository.findOne(finalFilter);
+
+        if (options?.lean !== false) {
+            query.lean();
+        }
 
         if (options?.select) {
-            repository.select(options.select);
+            query.select(options.select);
         }
 
         if (options?.join) {
-            repository.populate(
-                (typeof options.join === 'boolean' && options.join
+            const populateOptions =
+                typeof options.join === 'boolean' && options.join
                     ? this._join
-                    : options.join) as
-                    | PopulateOptions
-                    | (string | PopulateOptions)[],
-            );
+                    : options.join;
+            if (populateOptions && typeof populateOptions !== 'boolean') {
+                query.populate(populateOptions);
+            }
         }
 
         if (options?.session) {
-            repository.session(options.session);
+            query.session(options.session);
         }
 
-        return repository.exec();
+        const result = await query.exec();
+        return (result ?? undefined) as T | undefined;
     }
 
     // Find by ID
     async findOneById<T = EntityDocument>(
-        _id: Types.ObjectId,
+        _id: Types.ObjectId | string,
         options?: IDatabaseFindOneOptions,
-    ): Promise<T> {
-        return this.findOne<T>({ _id } as RootFilterQuery<Entity>, options);
+    ): Promise<T | undefined> {
+        const objectId =
+            typeof _id === 'string' ? new Types.ObjectId(_id) : _id;
+        return await this.findOne<T>(
+            { _id: objectId } as FilterQuery<Entity>,
+            options,
+        );
     }
 
     // Create document
@@ -223,48 +385,83 @@ export class BaseRepository<
             document.$session(options.session);
         }
 
-        return document.save() as Promise<T>;
+        const result = await document.save();
+        return result as T;
+    }
+
+    // Create many documents
+    async createMany<T = EntityDocument>(
+        data: Partial<Entity>[],
+        options?: IDatabaseCreateOptions,
+    ): Promise<T[]> {
+        const result = await this._repository.insertMany(data, {
+            ordered: true,
+            rawResult: false,
+            ...(options?.session && { session: options.session }),
+        });
+        return result as T[];
     }
 
     // Update document
     async updateOne<T = EntityDocument>(
-        find: RootFilterQuery<Entity> | Promise<RootFilterQuery<Entity>>,
+        filter: FilterQuery<Entity>,
         data: UpdateQuery<Entity>,
         options?: IDatabaseUpdateOptions,
-    ): Promise<T> {
-        const resolvedFind = await Promise.resolve(find || {});
-        const finalFind = {
-            ...resolvedFind,
+    ): Promise<T | undefined> {
+        const finalFilter: FilterQuery<Entity> = {
+            ...(filter || {}),
             deleted: false,
         };
         const updateData = {
             ...data,
             updatedAt: new Date(),
         };
+
         const updateQuery = this._repository.findOneAndUpdate(
-            finalFind,
+            finalFilter,
             updateData,
-            { new: true },
+            {
+                new: true,
+                returnDocument: options?.returnDocument || 'after',
+                ...(options?.session && { session: options.session }),
+            },
         );
 
-        if (options?.session) {
-            updateQuery.session(options.session);
-        }
-
-        return updateQuery.exec() as Promise<T>;
+        const result = await updateQuery.exec();
+        return (result ?? undefined) as T | undefined;
     }
 
     // Update by ID
     async updateOneById<T = EntityDocument>(
-        _id: Types.ObjectId,
+        _id: Types.ObjectId | string,
         data: UpdateQuery<Entity>,
         options?: IDatabaseUpdateOptions,
-    ): Promise<T> {
-        return this.updateOne<T>(
-            { _id } as RootFilterQuery<Entity>,
+    ): Promise<T | undefined> {
+        const objectId =
+            typeof _id === 'string' ? new Types.ObjectId(_id) : _id;
+        return await this.updateOne<T>(
+            { _id: objectId } as FilterQuery<Entity>,
             data,
             options,
         );
+    }
+
+    // Update many documents
+    async updateMany<T = EntityDocument>(
+        filter: FilterQuery<Entity>,
+        data: UpdateQuery<Entity>,
+        options?: IDatabaseUpdateOptions,
+    ): Promise<number> {
+        const updateData = {
+            ...data,
+            updatedAt: new Date(),
+        };
+
+        const result = await this._repository.updateMany(filter, updateData, {
+            ...(options?.session && { session: options.session }),
+        });
+
+        return result.modifiedCount;
     }
 
     // Soft delete
@@ -344,26 +541,88 @@ export class BaseRepository<
 
     // Count documents
     async count(
-        find?: RootFilterQuery<Entity> | Promise<RootFilterQuery<Entity>>,
+        filter?: FilterQuery<Entity>,
         withDeleted?: boolean,
     ): Promise<number> {
-        const resolvedFind = await Promise.resolve(find || {});
-        return this._repository
+        const result = await this._repository
             .countDocuments({
-                ...resolvedFind,
+                ...(filter || {}),
                 ...(!withDeleted && {
                     deleted: false,
                 }),
             })
             .exec();
+        return result;
+    }
+
+    // Get document counts with grouping
+    async getDocumentCounts(
+        groupByField?: string,
+        additionalFilters: Record<string, unknown> = {},
+    ): Promise<CountResult> {
+        const pipeline: PipelineStage[] = [];
+
+        if (Object.keys(additionalFilters).length > 0) {
+            pipeline.push({
+                $match: additionalFilters,
+            });
+        }
+
+        if (groupByField) {
+            pipeline.push(
+                {
+                    $group: {
+                        _id: `$${groupByField}`,
+                        count: { $sum: 1 },
+                    },
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        [groupByField]: '$_id',
+                        count: 1,
+                    },
+                },
+                {
+                    $sort: { count: -1 },
+                },
+            );
+        } else {
+            pipeline.push({
+                $group: {
+                    _id: null,
+                    totalCount: { $sum: 1 },
+                },
+            });
+        }
+
+        const result = await this._repository.aggregate(pipeline);
+
+        if (result.length === 0) {
+            return groupByField ? [] : { totalCount: 0 };
+        }
+
+        if (!groupByField) {
+            return { totalCount: result[0]?.totalCount || 0 };
+        }
+
+        return result.map(item => {
+            if (item[groupByField] === null) {
+                return {
+                    [groupByField]: 'un-categorized',
+                    count: item.count,
+                };
+            }
+            return item;
+        });
     }
 
     // Check if document exists
     async exists(
-        find: RootFilterQuery<Entity>,
+        filter: FilterQuery<Entity>,
         withDeleted?: boolean,
     ): Promise<boolean> {
-        const count = await this.count(find, withDeleted);
+        const count = await this.count(filter, withDeleted);
         return count > 0;
     }
 }
